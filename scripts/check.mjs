@@ -6,7 +6,7 @@ import assert from 'node:assert/strict'
 import { execFileSync } from 'node:child_process'
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import vm from 'node:vm'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
@@ -14,7 +14,7 @@ const PLUGINS = join(ROOT, 'plugins')
 const SCOPE = '@daffaahmadsm/'
 const NAME = /^@daffaahmadsm\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*$/
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
-const REQUIRED_FILES = ['index.js', 'client.js', 'cordis.patch.yml', 'icon.svg', 'README.md']
+const REQUIRED_FILES = ['index.js', 'client.js', 'cordis.patch.yml', 'icon.svg', 'README.md', 'LICENSE']
 
 function fail(message) {
   throw new Error(message)
@@ -41,7 +41,7 @@ function patternExists(dir, pattern) {
 function checkManifest(dir) {
   const manifestPath = join(dir, 'package.json')
   const manifest = readJson(manifestPath)
-  const folder = dir.split('/').pop()
+  const folder = basename(dir)
 
   assert.match(manifest.name, NAME, `${manifestPath}: name must match ${SCOPE}dsh-<kebab-name>`)
   assert.equal(

@@ -46,7 +46,7 @@ jobs:
           npm pack "plugins/${{ steps.meta.outputs.plugin }}" --pack-destination dist
           TARBALL="dist/dsh-${{ steps.meta.outputs.plugin }}-${{ steps.meta.outputs.version }}.tgz"
           mv dist/*.tgz "$TARBALL"
-          for file in index.js client.js cordis.patch.yml icon.svg README.md; do
+          for file in index.js client.js cordis.patch.yml icon.svg README.md LICENSE; do
             tar -tzf "$TARBALL" | grep -q "/$file$"
           done
       - name: Create GitHub Release

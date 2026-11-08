@@ -23,7 +23,7 @@ jobs:
           npm pack ./plugins/screen-lock --pack-destination "$RUNNER_TEMP" --json > "$RUNNER_TEMP/pack.json"
           TARBALL=$(find "$RUNNER_TEMP" -maxdepth 1 -name '*.tgz' -print -quit)
           test -n "$TARBALL"
-          for file in index.js client.js cordis.patch.yml icon.svg README.md; do
+          for file in index.js client.js cordis.patch.yml icon.svg README.md LICENSE; do
             tar -tzf "$TARBALL" | grep -q "/$file$"
           done
 

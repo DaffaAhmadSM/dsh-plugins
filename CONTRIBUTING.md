@@ -8,7 +8,7 @@ Each plugin lives in `plugins/<plugin>/` and is an independent npm package. A pa
 2. Rename the package to `@daffaahmadsm/dsh-<plugin>` and bump `version` to `1.0.0`.
 3. Rename the row id in `cordis.patch.yml` and point `name` at the new package.
 4. Update the `window.__ModuleLoader__.load({ id: ... })` id in `client.js` to match the package name exactly.
-5. Update `package.json` `repository.directory`, `files`, `icon`, and the README.
+5. Update `package.json` `repository.directory`, `files`, `icon`, and the README. Keep `LICENSE` in the package.
 6. Run `npm run check`.
 7. Test a local install and the Web UI.
 8. Commit, then tag `<plugin>-v1.0.0` and push the tag.
@@ -31,7 +31,7 @@ Each plugin lives in `plugins/<plugin>/` and is an independent npm package. A pa
     "./icon": "./icon.svg",
     "./package.json": "./package.json"
   },
-  "files": ["index.js", "client.js", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md"],
+  "files": ["index.js", "client.js", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md", "LICENSE"],
   "engines": { "dsh": ">=0.0.0-0" },
   "dsh": {
     "bundle": { "patch": "./cordis.patch.yml" },
