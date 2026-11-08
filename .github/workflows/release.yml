@@ -39,16 +39,20 @@ jobs:
           echo "plugin=$PLUGIN" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       - run: npm run check
+      - run: npm test
       - name: Pack
         run: |
           set -euo pipefail
           mkdir -p dist
-          npm pack "plugins/${{ steps.meta.outputs.plugin }}" --pack-destination dist
+          npm pack "./plugins/${{ steps.meta.outputs.plugin }}" --pack-destination dist
           TARBALL="dist/dsh-${{ steps.meta.outputs.plugin }}-${{ steps.meta.outputs.version }}.tgz"
           mv dist/*.tgz "$TARBALL"
-          for file in index.js client.js cordis.patch.yml icon.svg README.md LICENSE; do
+          for file in package.json index.js cordis.patch.yml icon.svg README.md LICENSE; do
             tar -tzf "$TARBALL" | grep -q "/$file$"
           done
+          if tar -xOf "$TARBALL" package/package.json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.exit(JSON.parse(s).dsh?.client?0:1))'; then
+            tar -tzf "$TARBALL" | grep -q "/client.js$"
+          fi
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

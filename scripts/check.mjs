@@ -14,7 +14,7 @@ const PLUGINS = join(ROOT, 'plugins')
 const SCOPE = '@daffaahmadsm/'
 const NAME = /^@daffaahmadsm\/dsh-[a-z0-9]+(?:-[a-z0-9]+)*$/
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/
-const REQUIRED_FILES = ['index.js', 'client.js', 'cordis.patch.yml', 'icon.svg', 'README.md', 'LICENSE']
+const BASE_FILES = ['index.js', 'cordis.patch.yml', 'icon.svg', 'README.md', 'LICENSE']
 
 function fail(message) {
   throw new Error(message)
@@ -85,13 +85,16 @@ function checkManifest(dir) {
   assert.ok(existsSync(join(dir, patch)), `${manifestPath}: bundle patch ${patch} does not exist`)
 
   const client = manifest.dsh?.client
-  assert.equal(client?.platform, 'web', `${manifestPath}: dsh.client.platform must be web`)
-  assert.ok(Array.isArray(client?.inject), `${manifestPath}: dsh.client.inject must be an array`)
+  if (client !== undefined) {
+    assert.equal(client.platform, 'web', `${manifestPath}: dsh.client.platform must be web`)
+    assert.ok(Array.isArray(client.inject), `${manifestPath}: dsh.client.inject must be an array`)
+  }
   assert.match(manifest.icon ?? '', /\.svg$/, `${manifestPath}: top-level icon is required`)
 
+  const requiredFiles = client === undefined ? BASE_FILES : [...BASE_FILES, 'client.js']
   const files = manifest.files
   assert.ok(Array.isArray(files), `${manifestPath}: files is required`)
-  for (const required of REQUIRED_FILES) {
+  for (const required of requiredFiles) {
     assert.ok(files.includes(required), `${manifestPath}: files must include ${required}`)
     assert.ok(existsSync(join(dir, required)), `${manifestPath}: missing ${required}`)
   }
@@ -199,7 +202,7 @@ function checkPlugin(name) {
   const dir = join(PLUGINS, name)
   const manifest = checkManifest(dir)
   checkJavaScript(dir)
-  checkClient(dir, manifest)
+  if (manifest.dsh?.client !== undefined) checkClient(dir, manifest)
   console.log(`ok  ${manifest.name}@${manifest.version}`)
 }
 

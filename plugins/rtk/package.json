@@ -1,0 +1,39 @@
+{
+  "name": "@daffaahmadsm/dsh-rtk",
+  "version": "0.1.0",
+  "description": "Routes DeepSeek Harness shell commands through RTK (Rust Token Killer) so the model reads compact output.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./index.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "dsh": ">=0.0.0-0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaffaAhmadSM/dsh-plugins.git",
+    "directory": "plugins/rtk"
+  }
+}

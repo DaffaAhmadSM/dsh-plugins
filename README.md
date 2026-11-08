@@ -6,6 +6,7 @@ Plugins for [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness),
 
 | Plugin | What it does | Copy-paste install link |
 | --- | --- | --- |
+| [RTK](./plugins/rtk) | Compresses shell command output through RTK before the model reads it. Requires RTK installed separately. | `https://github.com/DaffaAhmadSM/dsh-plugins/releases/download/rtk-v0.1.0/dsh-rtk-0.1.0.tgz` |
 | [Screen lock](./plugins/screen-lock) | Asks for a password every time the Web GUI is opened. | `https://github.com/DaffaAhmadSM/dsh-plugins/releases/download/screen-lock-v1.0.0/dsh-screen-lock-1.0.0.tgz` |
 
 Each plugin is its own package. Installing one does not install the others.
@@ -65,15 +66,18 @@ The host halves import nothing from DSH. The browser halves use only the public 
 
 Screen lock is a **client-side privacy gate, not encryption**. It stores a PBKDF2 hash in the browser's `localStorage`. Anyone with access to the browser's developer tools can remove or bypass the overlay, and the lock does not protect session data, the DSH API, or the files on disk. Use it to keep a casual observer from reading the screen, not as a security boundary. See [its README](./plugins/screen-lock/README.md) for details.
 
+RTK is a separate external binary. The plugin adds no permissions and sends no data on its own; RTK runs inside the same sandbox as the original command, and its telemetry is off by default. See [its README](./plugins/rtk/README.md).
+
 ## Development
 
 Requirements: Node.js 24.9 or newer, pnpm, and a DSH installation.
 
 ```sh
 npm run check
+npm test
 ```
 
-The check validates every package manifest, patch file, JavaScript syntax, packaged file list, and the browser module's registration contract. It has no dependencies.
+The check validates every package manifest, patch file, JavaScript syntax, packaged file list, and any browser module's registration contract. It has no dependencies. The test exercises the RTK wrapper with a fake `rtk` binary.
 
 Test a local install against a throwaway DSH home:
 
@@ -87,10 +91,10 @@ Layout:
 
 ```text
 plugins/<plugin>/
-  package.json        # dsh.bundle + dsh.client declarations
+  package.json        # dsh.bundle, plus optional dsh.client
   cordis.patch.yml    # rows this bundle inserts
-  index.js            # host half (may be empty)
-  client.js           # browser half, loaded through __ModuleLoader__
+  index.js            # host half
+  client.js           # optional browser half, loaded through __ModuleLoader__
   README.md
 ```
 

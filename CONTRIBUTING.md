@@ -4,16 +4,18 @@ Each plugin lives in `plugins/<plugin>/` and is an independent npm package. A pa
 
 ## Checklist
 
-1. Copy `plugins/screen-lock` to `plugins/<plugin>`.
-2. Rename the package to `@daffaahmadsm/dsh-<plugin>` and bump `version` to `1.0.0`.
+1. Copy `plugins/screen-lock` (browser + host) or `plugins/rtk` (host only) to `plugins/<plugin>`.
+2. Rename the package to `@daffaahmadsm/dsh-<plugin>` and bump `version`.
 3. Rename the row id in `cordis.patch.yml` and point `name` at the new package.
-4. Update the `window.__ModuleLoader__.load({ id: ... })` id in `client.js` to match the package name exactly.
+4. For a browser plugin, update the `window.__ModuleLoader__.load({ id: ... })` id in `client.js` to match the package name exactly.
 5. Update `package.json` `repository.directory`, `files`, `icon`, and the README. Keep `LICENSE` in the package.
-6. Run `npm run check`.
+6. Run `npm run check` and `npm test`.
 7. Test a local install and the Web UI.
-8. Commit, then tag `<plugin>-v1.0.0` and push the tag.
+8. Commit, then tag `<plugin>-v<version>` and push the tag.
 
 ## Package shape
+
+This is the browser-and-host shape. For a host-only plugin, remove `client.js`, remove `./client` from `exports`, remove `client.js` from `files`, and omit `dsh.client`.
 
 ```json
 {
@@ -56,7 +58,7 @@ Each plugin lives in `plugins/<plugin>/` and is an independent npm package. A pa
 - Do not add `@deepseek-ai/*` dependencies or peer dependencies. Importing a host package couples the plugin to one DSH version and can shadow the host's copy.
 - Do not add `scripts`, especially `prepare`. GitHub and tarball installs must not need build approval.
 - Prefer plain committed JavaScript. If a plugin genuinely needs a build, it must ship its built output in the package and the install paths in the README must be updated.
-- Host code goes in `index.js`; browser code goes in `client.js`. The browser loader id must equal the package name.
+- Host code goes in `index.js`; browser code is optional and goes in `client.js`. A host-only plugin omits both `dsh.client` and `client.js`. A browser plugin's loader id must equal the package name.
 - Add every runtime file to `files`, or the packed tarball will omit it.
 - Keep the plugin's `README.md` install link in sync with its version.
 
@@ -64,6 +66,7 @@ Each plugin lives in `plugins/<plugin>/` and is an independent npm package. A pa
 
 ```sh
 npm run check
+npm test
 npm pack ./plugins/<plugin>
 ```
 

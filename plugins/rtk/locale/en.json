@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "RTK",
+    "description": "Compress shell command output through RTK before the model reads it."
+  }
+}

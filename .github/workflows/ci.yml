@@ -17,18 +17,26 @@ jobs:
         with:
           node-version: 24
       - run: npm run check
+      - run: npm test
       - name: Verify packaged files
         run: |
           set -euo pipefail
-          npm pack ./plugins/screen-lock --pack-destination "$RUNNER_TEMP" --json > "$RUNNER_TEMP/pack.json"
-          TARBALL=$(find "$RUNNER_TEMP" -maxdepth 1 -name '*.tgz' -print -quit)
-          test -n "$TARBALL"
-          for file in index.js client.js cordis.patch.yml icon.svg README.md LICENSE; do
-            tar -tzf "$TARBALL" | grep -q "/$file$"
+          mkdir -p "$RUNNER_TEMP/packs"
+          for dir in plugins/*; do
+            [ -d "$dir" ] || continue
+            npm pack "./$dir" --pack-destination "$RUNNER_TEMP/packs" >/dev/null
+          done
+          for archive in "$RUNNER_TEMP/packs"/*.tgz; do
+            for file in package.json index.js cordis.patch.yml icon.svg README.md LICENSE; do
+              tar -tzf "$archive" | grep -q "package/$file$"
+            done
+            if tar -xOf "$archive" package/package.json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>process.exit(JSON.parse(s).dsh?.client?0:1))'; then
+              tar -tzf "$archive" | grep -q 'package/client.js$'
+            fi
           done
 
   install:
-    name: Install in a throwaway profile
+    name: Install in throwaway profiles
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,18 +53,28 @@ jobs:
           export DSH_HOME="$RUNNER_TEMP/dsh-home"
           mkdir -p "$RUNNER_TEMP/workspace"
           cd "$RUNNER_TEMP/workspace"
-          dsh plugin --profile ci add "$GITHUB_WORKSPACE/plugins/screen-lock"
-          dsh --profile ci --dump-config > "$RUNNER_TEMP/ci.yml"
-          grep -q '@daffaahmadsm/dsh-screen-lock' "$RUNNER_TEMP/ci.yml"
-          grep -q 'screen-lock' "$RUNNER_TEMP/ci.yml"
-      - name: Install from tarball
+          i=0
+          for dir in "$GITHUB_WORKSPACE"/plugins/*; do
+            i=$((i + 1))
+            name=$(node -p "require('$dir/package.json').name")
+            dsh plugin --profile "ci-$i" add "$dir"
+            dsh --profile "ci-$i" --dump-config > "$RUNNER_TEMP/ci-$i.yml"
+            grep -Fq "$name" "$RUNNER_TEMP/ci-$i.yml"
+          done
+      - name: Install from tarballs
         run: |
           set -euo pipefail
           export DSH_HOME="$RUNNER_TEMP/dsh-home"
-          npm pack "$GITHUB_WORKSPACE/plugins/screen-lock" --pack-destination "$RUNNER_TEMP"
-          TARBALL=$(find "$RUNNER_TEMP" -maxdepth 1 -name '*.tgz' -print -quit)
-          test -n "$TARBALL"
+          mkdir -p "$RUNNER_TEMP/packs"
+          for dir in "$GITHUB_WORKSPACE"/plugins/*; do
+            npm pack "$dir" --pack-destination "$RUNNER_TEMP/packs" >/dev/null
+          done
           cd "$RUNNER_TEMP/workspace"
-          dsh plugin --profile ci-tar add "$TARBALL"
-          dsh --profile ci-tar --dump-config > "$RUNNER_TEMP/ci-tar.yml"
-          grep -q '@daffaahmadsm/dsh-screen-lock' "$RUNNER_TEMP/ci-tar.yml"
+          i=0
+          for archive in "$RUNNER_TEMP"/packs/*.tgz; do
+            i=$((i + 1))
+            name=$(tar -xOf "$archive" package/package.json | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>console.log(JSON.parse(s).name))')
+            dsh plugin --profile "ci-tar-$i" add "$archive"
+            dsh --profile "ci-tar-$i" --dump-config > "$RUNNER_TEMP/ci-tar-$i.yml"
+            grep -Fq "$name" "$RUNNER_TEMP/ci-tar-$i.yml"
+          done
