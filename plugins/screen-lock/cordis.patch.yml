@@ -1,0 +1,3 @@
+- insert:
+    - id: screen-lock
+      name: '@daffaahmadsm/dsh-screen-lock'

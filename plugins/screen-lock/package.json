@@ -1,0 +1,47 @@
+{
+  "name": "@daffaahmadsm/dsh-screen-lock",
+  "version": "1.0.0",
+  "description": "Asks for a password every time the DeepSeek Harness Web GUI is opened.",
+  "license": "MIT",
+  "type": "module",
+  "main": "index.js",
+  "icon": "./icon.svg",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md"
+  ],
+  "engines": {
+    "dsh": ">=0.0.0-0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DaffaAhmadSM/dsh-plugins.git",
+    "directory": "plugins/screen-lock"
+  }
+}

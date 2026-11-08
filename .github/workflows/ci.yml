@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check packages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm run check
+      - name: Verify packaged files
+        run: |
+          set -euo pipefail
+          npm pack ./plugins/screen-lock --pack-destination "$RUNNER_TEMP" --json > "$RUNNER_TEMP/pack.json"
+          TARBALL=$(find "$RUNNER_TEMP" -maxdepth 1 -name '*.tgz' -print -quit)
+          test -n "$TARBALL"
+          for file in index.js client.js cordis.patch.yml icon.svg README.md; do
+            tar -tzf "$TARBALL" | grep -q "/$file$"
+          done
+
+  install:
+    name: Install in a throwaway profile
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: npm install --global @deepseek-ai/dsh
+      - name: Install from checkout
+        run: |
+          set -euo pipefail
+          export DSH_HOME="$RUNNER_TEMP/dsh-home"
+          mkdir -p "$RUNNER_TEMP/workspace"
+          cd "$RUNNER_TEMP/workspace"
+          dsh plugin --profile ci add "$GITHUB_WORKSPACE/plugins/screen-lock"
+          dsh --profile ci --dump-config > "$RUNNER_TEMP/ci.yml"
+          grep -q '@daffaahmadsm/dsh-screen-lock' "$RUNNER_TEMP/ci.yml"
+          grep -q 'screen-lock' "$RUNNER_TEMP/ci.yml"
+      - name: Install from tarball
+        run: |
+          set -euo pipefail
+          export DSH_HOME="$RUNNER_TEMP/dsh-home"
+          npm pack "$GITHUB_WORKSPACE/plugins/screen-lock" --pack-destination "$RUNNER_TEMP"
+          TARBALL=$(find "$RUNNER_TEMP" -maxdepth 1 -name '*.tgz' -print -quit)
+          test -n "$TARBALL"
+          cd "$RUNNER_TEMP/workspace"
+          dsh plugin --profile ci-tar add "$TARBALL"
+          dsh --profile ci-tar --dump-config > "$RUNNER_TEMP/ci-tar.yml"
+          grep -q '@daffaahmadsm/dsh-screen-lock' "$RUNNER_TEMP/ci-tar.yml"

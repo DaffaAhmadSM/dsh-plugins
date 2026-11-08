@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Screen lock",
+    "description": "Asks for a password every time the Web GUI is opened."
+  }
+}

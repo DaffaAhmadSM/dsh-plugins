@@ -1,0 +1,58 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*-v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Pack and release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Resolve plugin from tag
+        id: meta
+        run: |
+          set -euo pipefail
+          TAG="$GITHUB_REF_NAME"
+          PLUGIN="${TAG%-v*}"
+          VERSION="${TAG##*-v}"
+          test -n "$PLUGIN"
+          test -n "$VERSION"
+          test -d "plugins/$PLUGIN"
+          export PLUGIN VERSION
+          node -e '
+            const { readFileSync } = require("node:fs");
+            const manifest = JSON.parse(readFileSync(`plugins/${process.env.PLUGIN}/package.json`, "utf8"));
+            if (manifest.version !== process.env.VERSION) {
+              console.error(`tag ${process.env.VERSION} does not match ${manifest.name}@${manifest.version}`);
+              process.exit(1);
+            }
+          '
+          echo "plugin=$PLUGIN" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - run: npm run check
+      - name: Pack
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          npm pack "plugins/${{ steps.meta.outputs.plugin }}" --pack-destination dist
+          TARBALL="dist/dsh-${{ steps.meta.outputs.plugin }}-${{ steps.meta.outputs.version }}.tgz"
+          mv dist/*.tgz "$TARBALL"
+          for file in index.js client.js cordis.patch.yml icon.svg README.md; do
+            tar -tzf "$TARBALL" | grep -q "/$file$"
+          done
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.tgz \
+            --title "${{ steps.meta.outputs.plugin }} ${{ steps.meta.outputs.version }}" \
+            --generate-notes
